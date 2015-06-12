@@ -276,6 +276,8 @@ def ideal_trajectory_curve():
 
 def physics_update(current_position, velocity, gravity, dt):
     '''
+    Performs a single step of position and velocity calculation.
+
     @param current_position - current system value
     @param velocity - current velocity
     @param gravity - force of gravity
@@ -317,7 +319,8 @@ def simulate(genome, dt):
 def pid_fitness_func(genome, dt):
     '''
     This function is used by the Genetic Algorithm to optimize the PID loop to
-    find optimal parameters.
+    find optimal parameters - specifically this function calculates the fitness
+    score which is used by GA to differentiate between genomes.
 
     @param genome - genome representing PID parameters
     @param dt - time delta

@@ -30,8 +30,8 @@ class Menu(Widget):
     def __init__(self):
         super(Menu, self).__init__()
         self.add_widget(Sprite(source='images/background.png'))
-#        self.size = self.children[0].size
-        self.size = (200, 1820)
+        self.size = self.children[0].size
+#        self.size = (200, 1820)
         self.add_widget(Ground(source='images/ground.png'))
         self.add_widget(Label(center=self.center, text="Tap to Start"))
 
@@ -72,7 +72,7 @@ class Bird(Sprite):
             self.source = self._glide_image
 
     def fly_to(self, height):
-        self._pid.target = height
+        self._pid.target = height - (self.height / 2)
 
     def flap(self, passed_time):
         '''
@@ -129,6 +129,19 @@ class Pipe(Widget):
         self.width = self.top_image.width
         self.scored = False
 
+    @property
+    def mid_point(self):
+        '''
+        The openinig in between the pipes - mid-point.
+        '''
+        top_bottom = self.top_image.y
+        bottom_top = self.bottom_image.y + self.bottom_image.height
+        return (top_bottom + bottom_top) / 2
+
+    @property
+    def x_pos(self):
+        return self.top_image.pos[0]
+
     def update(self):
         self.x -= 2
         self.top_image.x = self.bottom_image.x = self.x
@@ -154,8 +167,12 @@ class Game(Widget):
     def __init__(self):
         super(Game, self).__init__()
         self.background = Background(source='images/background.png')
-        self.size = self.background.size 
+        self.size = self.background.size
         self.add_widget(self.background)
+
+        self.painter = Widget()
+        self.painter.size = self.background.size
+        self.add_widget(self.painter)
 
         self.bird = Bird(pos=(50, self.height / 2))
         self.bird.fly_to(100)
@@ -176,27 +193,30 @@ class Game(Widget):
         self.score = 0
 
     def update(self, dt):
+        self.painter.canvas.clear()
         if self.game_over:
             Clock.unschedule(self.update)
 
-#        self.background.update()
+        self.background.update()
         self.bird.update(dt)
         self.bird.flap(dt)
 
-#        self.ground.update()
+        self.ground.update()
 
-#        self.pipes.update(dt)
+        self.pipes.update(dt)
+        with self.painter.canvas:
+            for pipe in self.pipes.children:
+                if (pipe.x_pos - self.bird.x) <= 100:
+                    self.bird.fly_to(pipe.mid_point)
 
-#        if self.bird.collide_widget(self.ground):
-#            self.game_over = True
+        if self.bird.collide_widget(self.ground):
+            self.game_over = True
 
         for pipe in self.pipes.children:
             if pipe.top_image.collide_widget(self.bird):
                 self.game_over = True
-                print("Bump" + str(random.randint(0, 10)))
             elif pipe.bottom_image.collide_widget(self.bird):
                 self.game_over = True
-                print("Bump" + str(random.randint(0, 10)))
             elif not pipe.scored and pipe.right < self.bird.x:
                 pipe.scored = True
                 self.score += 1
